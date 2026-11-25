@@ -1,1 +1,15 @@
 
+
+{
+  "functions": {
+    "api/create.js": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/js/:id.js",
+      "destination": "/api/create?id=:id"
+    }
+  ]
+}
