@@ -56,7 +56,7 @@ export default async function handler(req, res) {
 
     const frame = document.createElement("iframe");
 
-    frame.setAttribute("sandbox", "allow-scripts");
+    frame.setAttribute("sandbox", "allow-scripts allow-modals");
     frame.style.width = "100%";
     frame.style.border = "0";
     frame.style.display = "block";
