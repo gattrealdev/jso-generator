@@ -4,7 +4,6 @@ import { randomUUID } from "node:crypto";
 const scripts = new Map();
 
 export default async function handler(req, res) {
-    // Generate JavaScript
     if (req.method === "POST") {
         const { html } = req.body || {};
 
@@ -14,35 +13,67 @@ export default async function handler(req, res) {
             });
         }
 
+        if (html.length > 100000) {
+            return res.status(413).json({
+                error: "Maksimal ukuran HTML 100 KB"
+            });
+        }
+
         const id = randomUUID().slice(0, 12);
 
         scripts.set(id, html);
 
-        return res.status(200).json({
+        return res.status(201).json({
             success: true,
             id,
-            url: `${process.env.VERCEL_PROJECT_PRODUCTION_URL ? "https://" + process.env.VERCEL_PROJECT_PRODUCTION_URL : "https://" + req.headers.host}/js/${id}.js`
+            url: `https://${req.headers.host}/js/${id}.js`
         });
     }
 
-    // Serve JavaScript
     if (req.method === "GET") {
         const id = req.query.id;
         const html = scripts.get(id);
 
         if (!html) {
-            return res.status(404).send("// Script not found");
+            return res.status(404).send(
+                "// Script tidak ditemukan"
+            );
         }
 
-        const safeHTML = JSON.stringify(html);
+        const payload = JSON.stringify(html);
 
-        res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+        res.setHeader(
+            "Content-Type",
+            "application/javascript; charset=utf-8"
+        );
+
         res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("X-Content-Type-Options", "nosniff");
 
         return res.send(`
-(function() {
-    const html = ${safeHTML};
-    document.body.insertAdjacentHTML("beforeend", html);
+(function () {
+    const html = ${payload};
+
+    const frame = document.createElement("iframe");
+
+    frame.setAttribute("sandbox", "allow-scripts");
+    frame.style.width = "100%";
+    frame.style.border = "0";
+    frame.style.display = "block";
+
+    const doc = \`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+\${html}
+</body>
+</html>\`;
+
+    document.currentScript.after(frame);
+    frame.srcdoc = doc;
 })();
         `);
     }
