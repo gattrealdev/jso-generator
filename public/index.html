@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HTML to JSO 0xmilo</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 16px;
+            background: #0c0d10;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 750px;
+            margin: 50px auto;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: #999;
+        }
+
+        textarea {
+            width: 100%;
+            height: 280px;
+            background: #17191e;
+            color: #b9e5ff;
+            border: 1px solid #30343d;
+            border-radius: 12px;
+            padding: 16px;
+            resize: vertical;
+            outline: none;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 14px;
+            padding: 15px;
+            background: white;
+            color: black;
+            border: 0;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .result {
+            display: none;
+            margin-top: 25px;
+            padding: 18px;
+            background: #17191e;
+            border-radius: 12px;
+            overflow-wrap: anywhere;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #0c0d10;
+            border: 1px solid #30343d;
+            color: white;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>HTML to JSO</h1>
+    <p>Convert HTML into a hosted JavaScript URL.</p>
+
+    <textarea id="html" placeholder="Paste your HTML here..."></textarea>
+
+    <button onclick="generate()">Generate JSO</button>
+
+    <div class="result" id="result">
+        <strong>Your JavaScript URL</strong>
+        <input id="url" readonly>
+
+        <button onclick="copyURL()">Copy URL</button>
+
+        <p>Use it in your HTML:</p>
+        <input id="snippet" readonly>
+        <button onclick="copySnippet()">Copy Script Tag</button>
+    </div>
+
+</div>
+
+<script>
+async function generate() {
+    const html = document.getElementById("html").value;
+
+    if (!html.trim()) {
+        return alert("Masukkan HTML terlebih dahulu!");
+    }
+
+    const button = document.querySelector("button");
+
+    button.disabled = true;
+    button.textContent = "Generating...";
+
+    try {
+        const response = await fetch("/api/create", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ html })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Generation failed");
+        }
+
+        document.getElementById("url").value = data.url;
+        document.getElementById("snippet").value =
+            `<script src="${data.url}"><\/script>`;
+
+        document.getElementById("result").style.display = "block";
+
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        button.disabled = false;
+        button.textContent = "Generate JSO";
+    }
+}
+
+function copyURL() {
+    navigator.clipboard.writeText(
+        document.getElementById("url").value
+    );
+}
+
+function copySnippet() {
+    navigator.clipboard.writeText(
+        document.getElementById("snippet").value
+    );
+}
+</script>
+
+</body>
+</html>
